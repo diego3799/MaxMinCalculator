@@ -5,8 +5,12 @@ module.exports = {
   },
   purge: [],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        roboto: "'Roboto', sans-serif",
+      },
+    },
   },
   variants: {},
   plugins: [],
-}
+};
