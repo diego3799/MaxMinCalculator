@@ -1,72 +1,38 @@
-import React, { Fragment } from "react";
+import React, { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
-import {
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import axios from "axios";
 
 const Form = () => {
   const { control, register, handleSubmit } = useForm({
     defaultValues: {
-      equations: [{ x: "", y: "" }],
+      eq: [{ x: "", y: "" }],
     },
   });
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState(null);
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "equations",
+    name: "eq",
   });
-  const onSubmit = (data) => {
-    console.log(data);
+
+  const onSubmit = async (info) => {
+    setLoading(true);
+    /**First we gotta parse the information into functions */
+    let eqLines = [];
+    let eqArea = [];
+    info.eq.forEach((item, i) => {
+      eqArea.push(` ${item.x}x + ${item.y}y ${item.sign} ${item.z}`);
+      eqLines.push(`${item.x}x + ${item.y}y = ${item.z}`);
+    });
+    const { data } = await axios.post("http://localhost:5000/", {
+      eqLines,
+      eqArea,
+    });
+    setData(data);
+    setLoading(false);
+
+    // console.log(data.eq[1].toString());
   };
-  const dataTable = [
-    {
-      name: "Page A",
-      uv: 4000,
-      pv: 2400,
-      amt: 2400,
-    },
-    {
-      name: "Page B",
-      uv: 3000,
-      pv: 1398,
-      amt: 2210,
-    },
-    {
-      name: "Page C",
-      uv: 2000,
-      pv: 9800,
-      amt: 2290,
-    },
-    {
-      name: "Page D",
-      uv: 2780,
-      pv: 3908,
-      amt: 2000,
-    },
-    {
-      name: "Page E",
-      uv: 1890,
-      pv: 4800,
-      amt: 2181,
-    },
-    {
-      name: "Page F",
-      uv: 2390,
-      pv: 3800,
-      amt: 2500,
-    },
-    {
-      name: "Page G",
-      uv: 3490,
-      pv: 4300,
-      amt: 2100,
-    },
-  ];
 
   return (
     <div className="container mx-auto">
@@ -116,34 +82,35 @@ const Form = () => {
                     <input
                       className="shadow w-20 text-right appearance-none border rounded py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mx-2"
                       placeholder="0"
-                      name={`equations[${index}].x`}
+                      name={`eq[${index}.x`}
                       ref={register()}
                     />
-                    <p>x +</p>
+                    <p className="whitespace-no-wrap"> x +</p>
                     <input
                       className="shadow w-20 text-right appearance-none border rounded py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mx-2"
                       placeholder="0"
-                      name={`equations[${index}].y`}
+                      name={`eq[${index}.y`}
                       ref={register()}
                     />
                     <p>y</p>
                     <select
-                      name={`equations[${index}].sign`}
+                      name={`eq[${index}].sign`}
                       ref={register()}
-                      className="appearance-none border w-10 bg-white text-gray-700 py-1 px-2 rounded leading-tight focus:outline-none mx-2"
+                      className="appearance-none border w-10 bg-white text-gray-700 py-1 px-2 rounded leading-tight focus:outline-none focus:shadow-outline mx-2"
                     >
                       <option value="="> = </option>
                       <option value=">=">{"≥"}</option>
                       <option value="<=">{"≤"}</option>
                     </select>
                     <input
-                      name={`equations[${index}].obj`}
+                      name={`eq[${index}].z`}
                       ref={register()}
                       className="shadow w-20 text-right appearance-none border rounded py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mx-2"
                       placeholder="0"
                     />
                   </div>
                   <button
+                    type="button"
                     onClick={() => remove(index)}
                     className="font-bold focus:outline-none transition duration-500 ease-in-out bg-red-500 hover:bg-red-700 text-white py-2 px-4 rounded-full ml-3"
                   >
@@ -154,43 +121,27 @@ const Form = () => {
               <div className="flex justify-between mt-4">
                 <div>
                   <button
+                    type="button"
                     onClick={() => append()}
-                    className="focus:outline-none  font-bold uppercase transition duration-500 ease-in-out bg-green-400 hover:bg-green-500 text-white py-2 px-4 rounded-full"
+                    className={`focus:outline-none  font-bold uppercase transition duration-500 ease-in-out bg-green-400 hover:bg-green-500 text-white py-2 px-4 rounded-full`}
                   >
                     +
                   </button>
                 </div>
-                <button className="focus:outline-none font-bold uppercase transition duration-500 ease-in-out bg-green-400 hover:bg-green-500 text-white px-3  py-2 rounded-md">
+                <button
+                  type="submit"
+                  className="focus:outline-none font-bold uppercase transition duration-500 ease-in-out bg-green-400 hover:bg-green-500 text-white px-3  py-2 rounded-md"
+                >
                   Calcular
+                  {loading && (
+                    <i className="animate-spin ml-2 fa fa-circle-o-notch" />
+                  )}
                 </button>
               </div>
             </form>
           </div>
           <div className=" border border-gray-200 rounded-md p-5">
-            <LineChart
-              width={500}
-              height={300}
-              data={dataTable}
-              margin={{
-                top: 5,
-                right: 30,
-                left: 20,
-                bottom: 5,
-              }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="pv"
-                stroke="#8884d8"
-                activeDot={{ r: 8 }}
-              />
-              <Line type="monotone" dataKey="uv" stroke="#82ca9d" />
-            </LineChart>
+            {data && <img src={data} alt="Grafica" />}
           </div>
         </div>
       </div>
