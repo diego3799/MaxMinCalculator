@@ -1,15 +1,49 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import axios from "axios";
 
+const schema = yup.object({
+  objx: yup
+    .number()
+    .typeError("Ingresa solo numeros en X en la función objetivo")
+    .required(),
+  objy: yup
+    .number()
+    .typeError("Ingresa solo numeros en Y en la función objetivo")
+    .required(),
+  eq: yup.array().of(
+    yup.object().shape({
+      x: yup
+        .number()
+        .typeError("Escribe solo valores en las funciones")
+        .required("Los valores en las funciones son obligatorios"),
+      y: yup
+        .number("Escribe solo numeros en las funciones")
+        .typeError("Escribe solo valores en las funciones")
+        .required("Los valores en las funciones son obligatorios"),
+      z: yup
+        .number("Escribe solo numeros en las funciones")
+        .typeError("Escribe solo valores en las funciones")
+        .required("Los valores en las funciones son obligatorios"),
+    })
+  ),
+});
+
 const Form = () => {
-  const { control, register, handleSubmit } = useForm({
+  const andGeo = "∧";
+  const { control, errors, register, handleSubmit } = useForm({
     defaultValues: {
-      eq: [{ x: "", y: "" }],
+      objx: "",
+      objy: "",
+      eq: [{ x: "", y: "", sign: ">=", z: "" }],
     },
+    reValidateMode: "onSubmit",
+    resolver: yupResolver(schema),
   });
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
   const { fields, append, remove } = useFieldArray({
     control,
     name: "eq",
@@ -17,22 +51,56 @@ const Form = () => {
 
   const onSubmit = async (info) => {
     setLoading(true);
-    /**First we gotta parse the information into functions */
-    let eqLines = [];
-    let eqArea = [];
-    info.eq.forEach((item, i) => {
-      eqArea.push(` ${item.x}x + ${item.y}y ${item.sign} ${item.z}`);
-      eqLines.push(`${item.x}x + ${item.y}y = ${item.z}`);
-    });
-    const { data } = await axios.post("http://localhost:5000/", {
-      eqLines,
-      eqArea,
-    });
-    setData(data);
+    setError(null);
+    window.ggbApplet.reset();
+    const objective = {
+      x: info.todo === "min" ? info.objx : -1 * info.objx,
+      y: info.todo === "min" ? info.objy : -1 * info.objy,
+    };
+    try {
+      const { data } = await axios.post("http://localhost:5000/solve", {
+        objective,
+        equations: info.eq,
+      });
+      let eqLines = [
+        `solution: ${info.objx}x + ${info.objy}y=${
+          info.todo === "min" ? data.result : -1 * data.result
+        }`,
+        `pointSolution= Point({${data.resultX},${data.resultY}})`,
+      ];
+      let eqArea = ["x>=0 ∧ y>=0"];
+      info.eq.forEach((item, i) => {
+        eqArea.push(` ${item.x}x + ${item.y}y ${item.sign} ${item.z}`);
+        eqLines.push(`${item.x}x + ${item.y}y = ${item.z}`);
+      });
+      let areaAnd = eqArea.join(` ${andGeo} `);
+      let finalString = eqLines.join("\n") + "\n" + areaAnd;
+      graphicate(finalString);
+    } catch (error) {
+      if (error.response) {
+        setError(error.response.data.message);
+      } else {
+        setError("Ocurrió un error de comunicación, intentelo de nuevo");
+      }
+      setTimeout(() => {
+        setError(null);
+      }, 5000);
+    }
+    /**This creats de graphic */
     setLoading(false);
-
-    // console.log(data.eq[1].toString());
   };
+  const graphicate = (finalString) => {
+    window.ggbApplet.evalCommand(finalString);
+  };
+
+  useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      setError("Verifica que todos los datos esten completos");
+      setTimeout(() => {
+        setError(null);
+      }, 5000);
+    }
+  }, [errors]);
 
   return (
     <div className="container mx-auto">
@@ -41,7 +109,7 @@ const Form = () => {
           Ingresa tus ecuaciones
         </h2>
         <div className="grid  lg:grid-cols-2 gap-5 mt-5">
-          <div className=" border border-gray-200 rounded-md p-5">
+          <div className=" border border-gray-200 rounded-md py-5 h-full">
             <form onSubmit={handleSubmit(onSubmit)}>
               <p className="text-xl text-center font-roboto">
                 Función Objetivo:
@@ -98,15 +166,14 @@ const Form = () => {
                       ref={register()}
                       className="appearance-none border w-10 bg-white text-gray-700 py-1 px-2 rounded leading-tight focus:outline-none focus:shadow-outline mx-2"
                     >
-                      <option value="="> = </option>
                       <option value=">=">{"≥"}</option>
                       <option value="<=">{"≤"}</option>
                     </select>
                     <input
-                      name={`eq[${index}].z`}
-                      ref={register()}
                       className="shadow w-20 text-right appearance-none border rounded py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mx-2"
                       placeholder="0"
+                      name={`eq[${index}].z`}
+                      ref={register()}
                     />
                   </div>
                   <button
@@ -118,7 +185,14 @@ const Form = () => {
                   </button>
                 </div>
               ))}
-              <div className="flex justify-between mt-4">
+              {error && (
+                <div className="my-5">
+                  <div className="bg-red-300 text-red-600 border-l-4 border-red-600 py-4 px-3">
+                    <p>{error}</p>
+                  </div>
+                </div>
+              )}
+              <div className="flex justify-between mt-10 px-3">
                 <div>
                   <button
                     type="button"
@@ -141,7 +215,7 @@ const Form = () => {
             </form>
           </div>
           <div className=" border border-gray-200 rounded-md p-5">
-            {data && <img src={data} alt="Grafica" />}
+            <div id="ggb-element"></div>
           </div>
         </div>
       </div>
