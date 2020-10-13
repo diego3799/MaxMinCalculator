@@ -32,7 +32,6 @@ const schema = yup.object({
 });
 
 const Form = () => {
-  const andGeo = "∧";
   const [board, setBoard] = useState(null);
   const [arrayPoints, setArrayPoints] = useState([]);
 
@@ -40,9 +39,7 @@ const Form = () => {
     defaultValues: {
       objx: 0,
       objy: 0,
-      eq: [
-        { x: 0, y: 0, sign: ">=", z: 0 },
-      ],
+      eq: [{ x: 0, y: 0, sign: ">=", z: 0 }],
     },
     reValidateMode: "onSubmit",
     resolver: yupResolver(schema),
@@ -146,7 +143,6 @@ const Form = () => {
         setError(null);
       }, 5000);
     }
-    /**This creats de graphic */
     setLoading(false);
   };
   useEffect(() => {
@@ -155,45 +151,6 @@ const Form = () => {
       axis: true,
     });
     setBoard(b);
-    /** constante X Y */
-    /**Los que son menor o igual tienen que tener inversa */
-    /**TODO: PROBLEMA 2 */
-    /**Contraint 1 */
-    // const line1 = board.create("line", [-24, 6, 4], { strokeColor: "#285e61" });
-    // board.create("inequality", [line1], {
-    //   inverse: true,
-    //   fillColor: "#44337a",
-    // });
-    // /** Constraint 2*/
-    // const line2 = board.create("line", [-6, 1, 2], { strokeColor: "#285e61" });
-    // board.create("inequality", [line2], {
-    //   inverse: true,
-    //   fillColor: "#44337a",
-    // });
-    // /**Constraint 3 */
-    // const line3 = board.create("line", [-1, -1, -1], {
-    //   strokeColor: "#285e61",
-    // });
-    // board.create("inequality", [line3], {
-    //   inverse: true,
-    //   fillColor: "#44337a",
-    // });
-    // /**Constraint 4 */
-    // const line4 = board.create("line", [-2, 0, 1], { strokeColor: "#285e61" });
-    // board.create("inequality", [line4], {
-    //   inverse: true,
-    //   fillColor: "#44337a",
-    // });
-    /**TODO: PROBLEMA 1 */
-    // /**Constraint 1 */
-    // const line1 = board.create("line", [-800, 1, 1]);
-    // board.create("inequality", [line1]);
-    // /**Constraint 2 */
-    // const line2 = board.create("line", [0, 0.21, -0.3]);
-    // board.create("inequality", [line2], { inverse: true });
-    // /**Constraint 3 */
-    // const line3 = board.create("line", [0, 0.03, -0.01]);
-    // board.create("inequality", [line3]);
   }, []);
 
   useEffect(() => {
@@ -269,6 +226,7 @@ const Form = () => {
                       ref={register()}
                       className="appearance-none border w-10 bg-white text-gray-700 py-1 px-2 rounded leading-tight focus:outline-none focus:shadow-outline mx-2"
                     >
+                      <option value="=">{"="}</option>
                       <option value=">=">{"≥"}</option>
                       <option value="<=">{"≤"}</option>
                     </select>
