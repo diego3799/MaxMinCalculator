@@ -64,8 +64,8 @@ const Form = () => {
       x: info.todo === "min" ? info.objx : -1 * info.objx,
       y: info.todo === "min" ? info.objy : -1 * info.objy,
     };
-    // const API_URL = "https://manmixserver.vercel.app";
-    const API_URL = "http://localhost:5000";
+    const API_URL = "https://manmixserver.vercel.app";
+    // const API_URL = "http://localhost:5000";
 
     try {
       const { data } = await axios.post(
