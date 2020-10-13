@@ -34,12 +34,15 @@ const schema = yup.object({
 const Form = () => {
   const [board, setBoard] = useState(null);
   const [arrayPoints, setArrayPoints] = useState([]);
+  const [puntoSolucion, setPuntoSolucion] = useState(null);
+  const [valorFuncion, setValorFuncion] = useState(null);
 
   const { control, errors, register, handleSubmit } = useForm({
     defaultValues: {
-      objx: 0,
-      objy: 0,
-      eq: [{ x: 0, y: 0, sign: ">=", z: 0 }],
+      eq: [
+        { x: "", y: "", z: "" },
+        { x: "", y: "", z: "" },
+      ],
     },
     reValidateMode: "onSubmit",
     resolver: yupResolver(schema),
@@ -53,6 +56,8 @@ const Form = () => {
 
   const onSubmit = async (info) => {
     setLoading(true);
+    setPuntoSolucion(null);
+    setValorFuncion(null);
     setError(null);
     board.removeObject(arrayPoints);
     const objective = {
@@ -100,10 +105,13 @@ const Form = () => {
       let resultado = data.result;
       let xfinal = data.resultX;
       let yfinal = data.resultY;
+      
       /**Redondear a dos decimales */
       resultado = Math.round(100 * resultado) / 100;
       xfinal = Math.round(100 * xfinal) / 100;
       yfinal = Math.round(100 * yfinal) / 100;
+      setPuntoSolucion(`: (${xfinal},${yfinal})`);
+      setValorFuncion(`: ${resultado}`);
       /**Linea final */
       let finalLine = board.create(
         "line",
@@ -147,7 +155,7 @@ const Form = () => {
   };
   useEffect(() => {
     const b = window.JXG.JSXGraph.initBoard("box", {
-      boundingbox: [-5, 50, 50, -5],
+      boundingbox: [-2, 20, 20, -2],
       axis: true,
       showCopyright: false,
       grid: false,
@@ -184,14 +192,14 @@ const Form = () => {
                     name={`objx`}
                     ref={register()}
                   />
-                  <p>x +</p>
+                  <p>x1 +</p>
                   <input
                     className="shadow w-20 text-right appearance-none border rounded py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mx-2"
                     placeholder="0"
                     name={`objy`}
                     ref={register()}
                   />
-                  <p>y</p>
+                  <p>x2</p>
                 </div>
                 <select
                   name={`todo`}
@@ -212,17 +220,17 @@ const Form = () => {
                     <input
                       className="shadow w-20 text-right appearance-none border rounded py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mx-2"
                       placeholder="0"
-                      name={`eq[${index}.x`}
+                      name={`eq[${index}].x`}
                       ref={register()}
                     />
-                    <p className="whitespace-no-wrap"> x +</p>
+                    <p className="whitespace-no-wrap"> x1 +</p>
                     <input
                       className="shadow w-20 text-right appearance-none border rounded py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mx-2"
                       placeholder="0"
-                      name={`eq[${index}.y`}
+                      name={`eq[${index}].y`}
                       ref={register()}
                     />
-                    <p>y</p>
+                    <p>x2</p>
                     <select
                       name={`eq[${index}].sign`}
                       ref={register()}
@@ -239,13 +247,15 @@ const Form = () => {
                       ref={register()}
                     />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => remove(index)}
-                    className="font-bold focus:outline-none transition duration-500 ease-in-out bg-red-500 hover:bg-red-700 text-white py-2 px-4 rounded-full ml-3"
-                  >
-                    x
-                  </button>
+                  {index > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => remove(index)}
+                      className="font-bold focus:outline-none transition duration-500 ease-in-out bg-red-500 hover:bg-red-700 text-white py-2 px-4 rounded-full ml-3"
+                    >
+                      x
+                    </button>
+                  )}
                 </div>
               ))}
               {error && (
@@ -291,7 +301,7 @@ const Form = () => {
               <ul className="w-1/2">
                 <li className="flex items-center">
                   <div className="w-2 h-2 rounded-full bg bg-red-600 mr-3" />
-                  Punto de la solución
+                  Punto de la solución {puntoSolucion && puntoSolucion}
                 </li>
                 <li className="flex items-center">
                   <div className="w-2 h-2 rounded-full bg border border-black mr-3" />
@@ -303,7 +313,7 @@ const Form = () => {
                 </li>
                 <li className="flex items-center">
                   <div className="w-2 h-2 rounded-full bg bg-pink-800 mr-3" />
-                  Función Objetivo
+                  Función Objetivo {valorFuncion && valorFuncion}
                 </li>
                 <li className="flex items-center">
                   <div className="w-2 h-2 rounded-full bg bg-teal-800 mr-3" />
