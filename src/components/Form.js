@@ -33,11 +33,18 @@ const schema = yup.object({
 
 const Form = () => {
   const andGeo = "∧";
+  const [board, setBoard] = useState(null);
+  const [arrayPoints, setArrayPoints] = useState([]);
+
   const { control, errors, register, handleSubmit } = useForm({
     defaultValues: {
-      objx: "",
-      objy: "",
-      eq: [{ x: "", y: "", sign: ">=", z: "" }],
+      objx: 0.3,
+      objy: 0.9,
+      eq: [
+        { x: 1, y: 1, sign: ">=", z: 800 },
+        { x: 0.21, y: -0.3, sign: "<=", z: 0 },
+        { x: 0.03, y: -0.01, sign: ">=", z: 0 },
+      ],
     },
     reValidateMode: "onSubmit",
     resolver: yupResolver(schema),
@@ -52,13 +59,13 @@ const Form = () => {
   const onSubmit = async (info) => {
     setLoading(true);
     setError(null);
-    window.ggbApplet.reset();
+    board.removeObject(arrayPoints);
     const objective = {
       x: info.todo === "min" ? info.objx : -1 * info.objx,
       y: info.todo === "min" ? info.objy : -1 * info.objy,
     };
-    const API_URL = "https://manmixserver.vercel.app";
-    // const API_URL = "http://localhost:5000";
+    // const API_URL = "https://manmixserver.vercel.app";
+    const API_URL = "http://localhost:5000";
 
     try {
       const { data } = await axios.post(
@@ -73,20 +80,64 @@ const Form = () => {
           },
         }
       );
-      let eqLines = [
-        `solution: ${info.objx}x + ${info.objy}y=${
-          info.todo === "min" ? data.result : -1 * data.result
-        }`,
-        `pointSolution= Point({${data.resultX},${data.resultY}})`,
-      ];
-      let eqArea = ["x>=0 ∧ y>=0"];
-      info.eq.forEach((item, i) => {
-        eqArea.push(` ${item.x}x + ${item.y}y ${item.sign} ${item.z}`);
-        eqLines.push(`${item.x}x + ${item.y}y = ${item.z}`);
+      let arrayAux = [];
+      /**Poner las dos restricciones de x>0 y y>0 */
+      let restX = board.create("line", [0, 1, 0], {
+        strokeColor: "#285e61",
       });
-      let areaAnd = eqArea.join(` ${andGeo} `);
-      let finalString = eqLines.join("\n") + "\n" + areaAnd;
-      graphicate(finalString);
+      arrayAux.push(restX);
+      let restriccionX = board.create("inequality", [restX], {
+        inverse: false,
+        fillColor: "#44337a",
+      });
+      arrayAux.push(restriccionX);
+      let restY = board.create("line", [0, 0, 1], {
+        strokeColor: "#285e61",
+      });
+      arrayAux.push(restY);
+      let restriccionY = board.create("inequality", [restY], {
+        inverse: false,
+        fillColor: "#44337a",
+      });
+      arrayAux.push(restriccionY);
+
+      /**Graficar la solucion y el punto */
+      let resultado = data.result;
+      let xfinal = data.resultX;
+      let yfinal = data.resultY;
+      /**Redondear a dos decimales */
+      resultado = Math.round(100 * resultado) / 100;
+      xfinal = Math.round(100 * xfinal) / 100;
+      yfinal = Math.round(100 * yfinal) / 100;
+      /**Linea final */
+      let finalLine = board.create(
+        "line",
+        [-1 * resultado, info.objx, info.objy],
+        {
+          strokeColor: "#97266d",
+        }
+      );
+      arrayAux.push(finalLine);
+      /**Punto de solucion */
+      let puntoSolucion = board.create("point", [xfinal, yfinal]);
+      arrayAux.push(puntoSolucion);
+      /**Apartir de aqui tenemos que graficar */
+      info.eq.forEach((item) => {
+        let line1 = board.create(
+          "line",
+          [-1 * parseFloat(item.z), item.x, item.y],
+          {
+            strokeColor: "#285e61",
+          }
+        );
+        arrayAux.push(line1);
+        let restric1 = board.create("inequality", [line1], {
+          inverse: item.sign === ">=" ? false : true,
+          fillColor: "#44337a",
+        });
+        arrayAux.push(restric1);
+      });
+      setArrayPoints(arrayAux);
     } catch (error) {
       if (error.response) {
         setError(error.response.data.message);
@@ -100,9 +151,52 @@ const Form = () => {
     /**This creats de graphic */
     setLoading(false);
   };
-  const graphicate = (finalString) => {
-    window.ggbApplet.evalCommand(finalString);
-  };
+  useEffect(() => {
+    const b = window.JXG.JSXGraph.initBoard("box", {
+      boundingbox: [-10, 10, 10, -10],
+      axis: true,
+    });
+    setBoard(b);
+    /** constante X Y */
+    /**Los que son menor o igual tienen que tener inversa */
+    /**TODO: PROBLEMA 2 */
+    /**Contraint 1 */
+    // const line1 = board.create("line", [-24, 6, 4], { strokeColor: "#285e61" });
+    // board.create("inequality", [line1], {
+    //   inverse: true,
+    //   fillColor: "#44337a",
+    // });
+    // /** Constraint 2*/
+    // const line2 = board.create("line", [-6, 1, 2], { strokeColor: "#285e61" });
+    // board.create("inequality", [line2], {
+    //   inverse: true,
+    //   fillColor: "#44337a",
+    // });
+    // /**Constraint 3 */
+    // const line3 = board.create("line", [-1, -1, -1], {
+    //   strokeColor: "#285e61",
+    // });
+    // board.create("inequality", [line3], {
+    //   inverse: true,
+    //   fillColor: "#44337a",
+    // });
+    // /**Constraint 4 */
+    // const line4 = board.create("line", [-2, 0, 1], { strokeColor: "#285e61" });
+    // board.create("inequality", [line4], {
+    //   inverse: true,
+    //   fillColor: "#44337a",
+    // });
+    /**TODO: PROBLEMA 1 */
+    // /**Constraint 1 */
+    // const line1 = board.create("line", [-800, 1, 1]);
+    // board.create("inequality", [line1]);
+    // /**Constraint 2 */
+    // const line2 = board.create("line", [0, 0.21, -0.3]);
+    // board.create("inequality", [line2], { inverse: true });
+    // /**Constraint 3 */
+    // const line3 = board.create("line", [0, 0.03, -0.01]);
+    // board.create("inequality", [line3]);
+  }, []);
 
   useEffect(() => {
     if (Object.keys(errors).length > 0) {
@@ -217,6 +311,7 @@ const Form = () => {
                   type="submit"
                   className="focus:outline-none font-bold uppercase transition duration-500 ease-in-out bg-green-400 hover:bg-green-500 text-white px-3  py-2 rounded-md"
                 >
+                  {" "}
                   Calcular
                   {loading && (
                     <i className="animate-spin ml-2 fa fa-circle-o-notch" />
@@ -226,10 +321,45 @@ const Form = () => {
             </form>
           </div>
           <div className=" border border-gray-200 rounded-md p-5">
-            <div id="ggb-element"></div>
+            <div id="ggb-element" style={{ display: "none" }}></div>
+            <div
+              id="box"
+              style={{
+                width: 550,
+                height: 600,
+              }}
+            ></div>
+            <div className="flex items-startz">
+              <ul className="w-1/2">
+                <li className="flex items-center">
+                  <div className="w-2 h-2 rounded-full bg bg-red-600 mr-3" />
+                  Punto de la solución
+                </li>
+                <li className="flex items-center">
+                  <div className="w-2 h-2 rounded-full bg border border-black mr-3" />
+                  Area de soluciones factibles
+                </li>
+                <li className="flex items-center">
+                  <div className="w-2 h-2 rounded-full bg bg-purple-900 mr-3" />
+                  Area de soluciones no factibles
+                </li>
+                <li className="flex items-center">
+                  <div className="w-2 h-2 rounded-full bg bg-pink-800 mr-3" />
+                  Función Objetivo
+                </li>
+                <li className="flex items-center">
+                  <div className="w-2 h-2 rounded-full bg bg-teal-800 mr-3" />
+                  Equaciones
+                </li>
+              </ul>
+              <div className="w-1/2">
+                <p>Usa los botones de arriba para moverte por la gráfica</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+      {/* {data && <img src={`data:image/png;base64,${data}`} />} */}
     </div>
   );
 };
