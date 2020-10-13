@@ -147,8 +147,10 @@ const Form = () => {
   };
   useEffect(() => {
     const b = window.JXG.JSXGraph.initBoard("box", {
-      boundingbox: [-10, 10, 10, -10],
+      boundingbox: [-5, 50, 50, -5],
       axis: true,
+      showCopyright: false,
+      grid: false,
     });
     setBoard(b);
   }, []);
