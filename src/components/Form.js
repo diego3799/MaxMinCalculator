@@ -38,12 +38,10 @@ const Form = () => {
 
   const { control, errors, register, handleSubmit } = useForm({
     defaultValues: {
-      objx: 0.3,
-      objy: 0.9,
+      objx: 0,
+      objy: 0,
       eq: [
-        { x: 1, y: 1, sign: ">=", z: 800 },
-        { x: 0.21, y: -0.3, sign: "<=", z: 0 },
-        { x: 0.03, y: -0.01, sign: ">=", z: 0 },
+        { x: 0, y: 0, sign: ">=", z: 0 },
       ],
     },
     reValidateMode: "onSubmit",
