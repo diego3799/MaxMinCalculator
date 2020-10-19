@@ -85,32 +85,37 @@ const Form = () => {
       let restX = board.create("line", [0, 1, 0], {
         strokeColor: "#285e61",
       });
+      restX.setAttribute({ fixed: true });
       arrayAux.push(restX);
       let restriccionX = board.create("inequality", [restX], {
         inverse: false,
         fillColor: "#44337a",
       });
+      restriccionX.setAttribute({ fixed: true });
       arrayAux.push(restriccionX);
       let restY = board.create("line", [0, 0, 1], {
         strokeColor: "#285e61",
       });
+      restY.setAttribute({ fixed: true });
       arrayAux.push(restY);
       let restriccionY = board.create("inequality", [restY], {
         inverse: false,
         fillColor: "#44337a",
       });
+
+      restriccionY.setAttribute({ fixed: true });
       arrayAux.push(restriccionY);
 
       /**Graficar la solucion y el punto */
       let resultado = data.result;
       let xfinal = data.resultX;
       let yfinal = data.resultY;
-      
+
       /**Redondear a dos decimales */
       resultado = Math.round(100 * resultado) / 100;
       xfinal = Math.round(100 * xfinal) / 100;
       yfinal = Math.round(100 * yfinal) / 100;
-      setPuntoSolucion(`: (${xfinal},${yfinal})`);
+      setPuntoSolucion(`: A(${xfinal},${yfinal})`);
       setValorFuncion(`: ${resultado}`);
       /**Linea final */
       let finalLine = board.create(
@@ -120,10 +125,12 @@ const Form = () => {
           strokeColor: "#97266d",
         }
       );
+      finalLine.setAttribute({ fixed: true });
       arrayAux.push(finalLine);
       /**Punto de solucion */
       let puntoSolucion = board.create("point", [xfinal, yfinal]);
-      arrayAux.push(puntoSolucion);
+      puntoSolucion.setAttribute({ fixed: true });
+      arrayAux.push(puntoSolucion); 
       /**Apartir de aqui tenemos que graficar */
       info.eq.forEach((item) => {
         let line1 = board.create(
@@ -133,11 +140,13 @@ const Form = () => {
             strokeColor: "#285e61",
           }
         );
+        line1.setAttribute({ fixed: true });
         arrayAux.push(line1);
         let restric1 = board.create("inequality", [line1], {
           inverse: item.sign === ">=" ? false : true,
           fillColor: "#44337a",
         });
+        restric1.setAttribute({ fixed: true });
         arrayAux.push(restric1);
       });
       setArrayPoints(arrayAux);
